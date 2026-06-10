@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Chasse au trésor</title>
+
+  <style>
+    :root {
+      --fond: #f5efe2;
+      --papier: #fff8e8;
+      --encre: #2b2118;
+      --accent: #b86b2b;
+      --accent-fonce: #7a3f16;
+      --vert: #2f8f46;
+      --rouge: #b43131;
+      --ombre: rgba(57, 39, 19, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--encre);
+
+      background:
+        radial-gradient(
+          circle at top left,
+          rgba(184, 107, 43, 0.18),
+          transparent 28%
+        ),
+        linear-gradient(
+          135deg,
+          #ead8b8,
+          var(--fond)
+        );
+    }
+
+    /* Empêche la page de défiler lorsque l'image finale est affichée */
+    body.image-finale-ouverte {
+      overflow: hidden;
+    }
+
+    header {
+      padding: 48px 20px 24px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 6vw, 4rem);
+      letter-spacing: 1px;
+    }
+
+    .intro {
+      max-width: 780px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto 48px;
+
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .carte-wrapper,
+    .panneau {
+      background: rgba(255, 248, 232, 0.9);
+      border: 2px solid rgba(122, 63, 22, 0.25);
+      border-radius: 24px;
+      box-shadow: 0 18px 40px var(--ombre);
+    }
+
+    .carte-wrapper {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+      padding: 24px;
+    }
+
+    .carte {
+      position: relative;
+      width: 100%;
+      height: 560px;
+      overflow: hidden;
+
+      border-radius: 18px;
+      border: 1px solid rgba(122, 63, 22, 0.35);
+
+      background-image: url("carte.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: #f4dfb8;
+    }
+
+    .carte::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+
+      background:
+        radial-gradient(
+          circle,
+          transparent 58%,
+          rgba(43, 33, 24, 0.10)
+        );
+
+      pointer-events: none;
+    }
+
+    .decor {
+      position: absolute;
+      font-size: clamp(1.5rem, 4vw, 2.8rem);
+      opacity: 0.75;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* =========================
+       POINTS SUR LA CARTE
+       ========================= */
+
+    .point {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+
+      border: none;
+      border-radius: 50%;
+
+      transform: translate(-50%, -50%);
+
+      display: grid;
+      place-items: center;
+
+      font-size: 1.3rem;
+      cursor: pointer;
+
+      transition:
+        transform 0.2s ease,
+        opacity 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .point.deverrouille {
+      color: white;
+      background: var(--accent);
+
+      box-shadow:
+        0 0 0 8px rgba(184, 107, 43, 0.25),
+        0 8px 18px var(--ombre);
+
+      animation: pulse 1.8s infinite;
+    }
+
+    .point.verrouille {
+      color: white;
+      background: #6d6258;
+      opacity: 0;
+      cursor: not-allowed;
+      filter: grayscale(0.7);
+    }
+
+    .point:hover.deverrouille {
+      transform: translate(-50%, -50%) scale(1.08);
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        box-shadow:
+          0 0 0 7px rgba(184, 107, 43, 0.22),
+          0 8px 18px var(--ombre);
+      }
+
+      50% {
+        box-shadow:
+          0 0 0 13px rgba(184, 107, 43, 0.08),
+          0 8px 18px var(--ombre);
+      }
+    }
+
+    /* =========================
+       PANNEAU DES INDICES
+       ========================= */
+
+    .panneau {
+      position: sticky;
+      top: 18px;
+      padding: 24px;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+
+      border-radius: 999px;
+
+      color: var(--accent-fonce);
+      background: rgba(184, 107, 43, 0.12);
+
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .panneau h2 {
+      margin: 0 0 12px;
+      font-size: 1.6rem;
+    }
+
+    .panneau p {
+      line-height: 1.55;
+    }
+
+    .indice {
+      margin: 16px 0;
+      padding: 16px;
+
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+
+      background: rgba(184, 107, 43, 0.10);
+    }
+
+    .indice p {
+      margin: 8px 0 0;
+    }
+
+    /* Image affichée dans l'indice */
+    .image-indice {
+      display: block;
+
+      width: 100%;
+      max-width: 600px;
+      height: auto;
+
+      margin: 16px auto 0;
+
+      border-radius: 10px;
+      object-fit: cover;
+
+      box-shadow: 0 8px 20px rgba(57, 39, 19, 0.18);
+    }
+
+    /* =========================
+       FORMULAIRE DU CODE
+       ========================= */
+
+    .form-code {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+
+      border: 1px solid rgba(122, 63, 22, 0.35);
+      border-radius: 12px;
+
+      background: #fffdf5;
+      font-size: 1rem;
+    }
+
+    button.valider,
+    button.reset {
+      padding: 12px 14px;
+
+      border: none;
+      border-radius: 12px;
+
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+
+      transition:
+        transform 0.15s ease,
+        background 0.15s ease;
+    }
+
+    button.valider {
+      color: white;
+      background: var(--accent);
+    }
+
+    button.reset {
+      width: 100%;
+      margin-top: 16px;
+
+      color: var(--accent-fonce);
+      background: rgba(122, 63, 22, 0.12);
+    }
+
+    button.valider:hover,
+    button.reset:hover {
+      transform: translateY(-1px);
+    }
+
+    .message {
+      min-height: 24px;
+      font-weight: bold;
+    }
+
+    .message.succes {
+      color: var(--vert);
+    }
+
+    .message.erreur {
+      color: var(--rouge);
+    }
+
+    .progression {
+      margin-top: 20px;
+      padding-top: 16px;
+
+      border-top: 1px solid rgba(122, 63, 22, 0.2);
+
+      font-size: 0.95rem;
+    }
+
+    /* =========================
+       ÉCRAN FINAL
+       ========================= */
+
+    .ecran-final {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      visibility: hidden;
+      opacity: 0;
+
+      background: rgba(0, 0, 0, 0.96);
+
+      transition:
+        opacity 0.4s ease,
+        visibility 0.4s ease;
+    }
+
+    .ecran-final.visible {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .image-finale {
+      display: block;
+
+      width: 100%;
+      height: 100%;
+
+      /*
+        contain = toute l'image est visible
+        cover = l'image remplit l'écran mais peut être coupée
+      */
+      object-fit: contain;
+
+      transform: scale(0.96);
+      transition: transform 0.4s ease;
+    }
+
+    .ecran-final.visible .image-finale {
+      transform: scale(1);
+    }
+
+    .fermer-final {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+
+      width: 52px;
+      height: 52px;
+
+      display: grid;
+      place-items: center;
+
+      border: none;
+      border-radius: 50%;
+
+      color: #222;
+      background: rgba(255, 255, 255, 0.9);
+
+      font-size: 2rem;
+      line-height: 1;
+
+      cursor: pointer;
+
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+    }
+
+    .fermer-final:hover {
+      background: white;
+      transform: scale(1.05);
+    }
+
+    .texte-final {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+
+      width: min(700px, calc(100% - 40px));
+      padding: 14px 20px;
+
+      transform: translateX(-50%);
+
+      border-radius: 14px;
+
+      color: white;
+      background: rgba(0, 0, 0, 0.65);
+
+      text-align: center;
+      font-size: clamp(1rem, 3vw, 1.5rem);
+      font-weight: bold;
+    }
+
+    /* =========================
+       VERSION MOBILE
+       ========================= */
+
+    @media (max-width: 850px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .panneau {
+        position: static;
+      }
+
+      .carte-wrapper {
+        min-height: 500px;
+      }
+
+      .carte {
+        height: 460px;
+      }
+
+      .fermer-final {
+        top: 12px;
+        right: 12px;
+
+        width: 46px;
+        height: 46px;
+      }
+
+      .texte-final {
+        bottom: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>La recherche des joueurs perdus</h1>
+
+    <p class="intro">
+      En jouant à cache-cache, huit joueurs de Haikyuu se sont
+      retrouvés enfermés. Ton objectif est donc de retrouver les
+      8 clés perdues et de les délivrer afin de les sortir de ce
+      pétrin.
+
+      À chaque joueur délivré, il aura avec lui un code permettant
+      d'obtenir un indice sur l'endroit où peut se trouver la
+      prochaine clé.
+    </p>
+  </header>
+
+  <main>
+
+    <section
+      class="carte-wrapper"
+      aria-label="Carte de la chasse au trésor"
+    >
+      <div class="carte" id="carte"></div>
+    </section>
+
+    <aside class="panneau" id="panneau">
+      <span class="badge">Étape 1</span>
+
+      <h2>Commence la recherche</h2>
+
+      <p>
+        Clique sur le premier point de la carte pour afficher
+        le premier indice.
+      </p>
+
+      <div class="progression" id="progression"></div>
+
+      <button
+        class="reset"
+        type="button"
+        id="reset"
+      >
+        Recommencer la chasse
+      </button>
+    </aside>
+
+  </main>
+
+  <!--
+    ÉCRAN FINAL
+
+    Remplace "ImageFinale.jpg" par le nom de ton image finale.
+  -->
+  <div
+    class="ecran-final"
+    id="ecranFinal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Fin de la chasse au trésor"
+  >
+
+    <button
+      class="fermer-final"
+      id="fermerFinal"
+      type="button"
+      aria-label="Fermer l'image finale"
+    >
+      &times;
+    </button>
+
+    <img
+      class="image-finale"
+      src="Billets.png"
+      alt="Les joueurs retrouvés à la fin de la chasse"
+    >
+
+    <div class="texte-final">
+      Félicitations ! Tu as retrouvé tous les joueurs !
+    </div>
+
+  </div>
+
+  <script>
+    // ==============================================
+    // CONFIGURATION DE LA CHASSE AU TRÉSOR
+    // ==============================================
+    //
+    // x et y représentent la position du point
+    // sur la carte, en pourcentage.
+    //
+    // image est facultatif :
+    // si aucune image n'est indiquée, seul le texte
+    // de l'indice sera affiché.
+    //
+    // code correspond au code à entrer pour
+    // débloquer l'étape suivante.
+
+    const etapes = [
+      {
+        titre: "Comme à la maison",
+        x: 6,
+        y: 21,
+        icone: "📍",
+        texte:
+          "Quelques fois il suffit juste de regarder autour de soi",
+        indice:
+          "Quelque part",
+        image: "Image1.png",
+        code: "theoleplusbo"
+      },
+
+      {
+        titre: "Vielle impasse",
+        x: 15,
+        y: 56,
+        icone: "📍",
+        texte:
+          "La vraie recherche commence enfin !",
+        indice:
+          "Tu trouves ?",
+        image: "Image1.png",
+        code: "cqueledebut"
+      },
+
+      {
+        titre: "On joue ?",
+        x: 35,
+        y: 46,
+        icone: "📍",
+        texte:
+          "Ooooooh le beau tractopelle !",
+        indice:
+          "Je crois j'ai pas compris le principe d'un indice...",
+        image: "Image1.png",
+        code: "quoicoutractopelle"
+      },
+
+      {
+        titre: "BUUUUUUTTTTTT",
+        x: 36,
+        y: 77,
+        icone: "📍",
+        texte:
+          "Tu devrais en profiter pour t'entrainer au foot",
+        indice:
+          "Le ballon de foot est rond, je répète, le ballon de foot est rond",
+        image: "Image1.png",
+        code: "butdanstagueule"
+      },
+
+      {
+        titre: "Pied carré",
+        x: 54,
+        y: 72,
+        icone: "📍",
+        texte:
+          "Le principe du foot c'est de tirer dans le but enfin !",
+        indice:
+          "Après c'est le but qui est trop petit aussi je pense",
+        image: "Image1.png",
+        code: "toujoursuneexcuse"
+      },
+
+      {
+        titre: "OH MARIIIIEEEEE",
+        x: 77,
+        y: 49,
+        icone: "📍",
+        texte:
+          "Petite prière au passage ou pas la team ?",
+        indice:
+          "Je sais même pas si la clef est cachée proche de l'église",
+        image: "Image1.png",
+        code: "vivejesus"
+      },
+
+      {
+        titre: "Petit rond point des familles",
+        x: 35,
+        y: 15,
+        icone: "📍",
+        texte:
+          "En vrai personne ne le respecte ce rond point",
+        indice:
+          "En plus l'essence à coté est hyper chère",
+        image: "Image1.png",
+        code: "jaiplusdethune"
+      },
+
+      {
+        titre: "Dernier pas",
+        x: 37,
+        y: 33,
+        icone: "📍",
+        texte:
+          "Déja bravo d'être arrivé jusque là, perso j'aurai eu le flemme",
+        indice:
+          "Arrète de croire que t'auras une récompense au bout",
+        image: "Image1.png",
+        code: "bsahtekledegrade"
+      },
+
+    ];
+
+    // ==============================================
+    // RÉCUPÉRATION DES ÉLÉMENTS HTML
+    // ==============================================
+
+    const carte = document.getElementById("carte");
+    const panneau = document.getElementById("panneau");
+
+    const ecranFinal = document.getElementById("ecranFinal");
+    const fermerFinal = document.getElementById("fermerFinal");
+
+    // ==============================================
+    // PROGRESSION DU JOUEUR
+    // ==============================================
+
+    let niveauDebloque =
+      Number(localStorage.getItem("niveauDebloque")) || 0;
+
+    let etapeSelectionnee = 0;
+
+    // ==============================================
+    // AFFICHAGE DE LA CARTE
+    // ==============================================
+
+    function afficherCarte() {
+      // Supprime les anciens points avant de les recréer
+      carte
+        .querySelectorAll("button.point")
+        .forEach((point) => point.remove());
+
+      etapes.forEach((etape, index) => {
+        const point = document.createElement("button");
+
+        const estDeverrouille = index <= niveauDebloque;
+
+        point.className =
+          `point ${estDeverrouille ? "deverrouille" : "verrouille"}`;
+
+        point.style.left = `${etape.x}%`;
+        point.style.top = `${etape.y}%`;
+
+        point.textContent =
+          estDeverrouille ? etape.icone : "🔒";
+
+        point.title =
+          estDeverrouille ? etape.titre : "Point verrouillé";
+
+        point.setAttribute("aria-label", point.title);
+        point.type = "button";
+
+        point.addEventListener("click", () => {
+          if (estDeverrouille) {
+            etapeSelectionnee = index;
+            afficherPanneau(index);
+          }
+        });
+
+        carte.appendChild(point);
+      });
+
+      afficherProgression();
+    }
+
+    // ==============================================
+    // AFFICHAGE DU PANNEAU D'UNE ÉTAPE
+    // ==============================================
+
+    function afficherPanneau(index) {
+      const etape = etapes[index];
+
+      const derniereEtape =
+        index === etapes.length - 1;
+
+      /*
+        Cette variable crée la balise image uniquement
+        lorsqu'une propriété "image" existe dans l'étape.
+      */
+      const imageIndice = etape.image
+        ? `
+          <img
+            src="${etape.image}"
+            alt="Image de l'indice : ${etape.titre}"
+            class="image-indice"
+          >
+        `
+        : "";
+
+      panneau.innerHTML = `
+        <span class="badge">
+          Étape ${index + 1}
+        </span>
+
+        <h2>${etape.titre}</h2>
+
+        <p>${etape.texte}</p>
+
+        <div class="indice">
+          <strong>Indice :</strong>
+
+          <p>${etape.indice}</p>
+
+          ${imageIndice}
+        </div>
+
+        <form
+          class="form-code"
+          id="formCode"
+        >
+          <label for="code">
+            Code trouvé :
+          </label>
+
+          <input
+            id="code"
+            type="text"
+            placeholder="Entre le code ici"
+            autocomplete="off"
+            required
+          >
+
+          <button
+            class="valider"
+            type="submit"
+          >
+            ${
+              derniereEtape
+                ? "Terminer la chasse"
+                : "Débloquer la suite"
+            }
+          </button>
+
+          <div
+            class="message"
+            id="message"
+            aria-live="polite"
+          ></div>
+        </form>
+
+        <div
+          class="progression"
+          id="progression"
+        ></div>
+
+        <button
+          class="reset"
+          type="button"
+          id="reset"
+        >
+          Recommencer la chasse
+        </button>
+      `;
+
+      document
+        .getElementById("formCode")
+        .addEventListener("submit", verifierCode);
+
+      document
+        .getElementById("reset")
+        .addEventListener("click", recommencer);
+
+      afficherProgression();
+
+      document.getElementById("code").focus();
+    }
+
+    // ==============================================
+    // VÉRIFICATION DU CODE
+    // ==============================================
+
+    function verifierCode(event) {
+      event.preventDefault();
+
+      const champ =
+        document.getElementById("code");
+
+      const message =
+        document.getElementById("message");
+
+      const valeur =
+        champ.value.trim().toUpperCase();
+
+      const bonCode =
+        etapes[etapeSelectionnee].code.toUpperCase();
+
+      if (valeur === bonCode) {
+        const derniereEtape =
+          etapeSelectionnee === etapes.length - 1;
+
+        if (derniereEtape) {
+          message.textContent =
+            "Félicitations ! Tu as terminé la chasse au trésor.";
+
+          message.className =
+            "message succes";
+
+          afficherImageFinale();
+        } else {
+          niveauDebloque = Math.max(
+            niveauDebloque,
+            etapeSelectionnee + 1
+          );
+
+          localStorage.setItem(
+            "niveauDebloque",
+            String(niveauDebloque)
+          );
+
+          message.textContent =
+            "Code validé ! Un nouveau point est apparu sur la carte.";
+
+          message.className =
+            "message succes";
+
+          afficherCarte();
+        }
+      } else {
+        message.textContent =
+          "Ce n'est pas le bon code. Essaie encore.";
+
+        message.className =
+          "message erreur";
+      }
+
+      champ.value = "";
+
+      /*
+        On ne replace le curseur dans le champ que si
+        l'écran final n'est pas ouvert.
+      */
+      if (!ecranFinal.classList.contains("visible")) {
+        champ.focus();
+      }
+    }
+
+    // ==============================================
+    // AFFICHAGE DE LA PROGRESSION
+    // ==============================================
+
+    function afficherProgression() {
+      const bloc =
+        document.getElementById("progression");
+
+      if (!bloc) {
+        return;
+      }
+
+      const total = etapes.length;
+      const visibles = niveauDebloque + 1;
+
+      bloc.textContent =
+        `Progression : ${Math.min(visibles, total)} / ${total} point(s) visible(s).`;
+    }
+
+    // ==============================================
+    // IMAGE FINALE EN PLEIN ÉCRAN
+    // ==============================================
+
+    function afficherImageFinale() {
+      ecranFinal.classList.add("visible");
+      document.body.classList.add("image-finale-ouverte");
+
+      fermerFinal.focus();
+    }
+
+    function fermerImageFinale() {
+      ecranFinal.classList.remove("visible");
+      document.body.classList.remove("image-finale-ouverte");
+    }
+
+    fermerFinal.addEventListener(
+      "click",
+      fermerImageFinale
+    );
+
+    /*
+      Permet également de fermer l'écran en cliquant
+      sur le fond noir autour de l'image.
+    */
+    ecranFinal.addEventListener("click", (event) => {
+      if (event.target === ecranFinal) {
+        fermerImageFinale();
+      }
+    });
+
+    /*
+      Fermeture avec la touche Échap.
+    */
+    document.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Escape" &&
+        ecranFinal.classList.contains("visible")
+      ) {
+        fermerImageFinale();
+      }
+    });
+
+    // ==============================================
+    // RECOMMENCER LA CHASSE
+    // ==============================================
+
+    function recommencer() {
+      niveauDebloque = 0;
+      etapeSelectionnee = 0;
+
+      localStorage.removeItem("niveauDebloque");
+
+      fermerImageFinale();
+      afficherCarte();
+      afficherPanneau(0);
+    }
+
+    // Bouton présent au premier chargement de la page
+    document
+      .getElementById("reset")
+      .addEventListener("click", recommencer);
+
+    // Premier affichage de la carte
+    afficherCarte();
+  </script>
+
+</body>
+</html>
